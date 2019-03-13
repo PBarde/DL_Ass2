@@ -48,17 +48,15 @@ def clones(module, N):
 class RNNBlock(nn.Module):
     def __init__(self, emb_size, hidden_size, dp_keep_prob):
         super().__init__()
-        self.Wx = torch.nn.Parameter().new_empty((hidden_size, emb_size), requires_grad=True)
-        self.Wh = torch.nn.Parameter().new_empty((hidden_size, hidden_size), requires_grad=True)
-        self.bh = torch.nn.Parameter().new_empty((hidden_size), requires_grad=True)
+        self.Wx = torch.nn.Linear(emb_size, hidden_size, bias=False)
+        self.Wh = torch.nn.Linear(hidden_size, hidden_size)
         self.activation = torch.nn.Tanh()
         self.dropout = nn.Dropout(p=1 - dp_keep_prob)
 
     def forward(self, inputs, hidden):
-        A = self.Wx @ inputs.unsqueeze(-1)
-        B =  self.Wh @ hidden.unsqueeze(-1)
-        C = self.bh.unsqueeze(-1)
-        out = self.dropout(self.activation( A + B + C)).squeeze(-1)
+        A = self.Wx(inputs)
+        B =  self.Wh(hidden) # bias is here
+        out = self.dropout(self.activation(A + B))
         return out
 
 
@@ -121,11 +119,11 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.output_layer.bias.data.set_(self.output_layer.bias.data.new_zeros(self.output_layer.bias.data.shape))
         k = np.sqrt(self.hidden_size)
         for layer in self.rnn_blocks:
-            layer.Wx.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
+            layer.Wx.weight.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
                                                                            size=layer.Wx.data.shape)))
-            layer.Wh.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
+            layer.Wh.weight.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
                                                                   size=layer.Wh.data.shape)))
-            layer.bh.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
+            layer.Wh.bias.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
                                                                   size=layer.bh.data.shape)))
     def init_hidden(self):
         # TODO ========================
