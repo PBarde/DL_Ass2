@@ -48,9 +48,9 @@ def clones(module, N):
 class RNNBlock(nn.Module):
     def __init__(self, emb_size, hidden_size, dp_keep_prob):
         super().__init__()
-        self.Wx = torch.Tensor().new_empty((hidden_size, emb_size), requires_grad=True)
-        self.Wh = torch.Tensor().new_empty((hidden_size, hidden_size), requires_grad=True)
-        self.bh = torch.Tensor().new_empty((hidden_size), requires_grad=True)
+        self.Wx = torch.nn.Parameter().new_empty((hidden_size, emb_size), requires_grad=True)
+        self.Wh = torch.nn.Parameter().new_empty((hidden_size, hidden_size), requires_grad=True)
+        self.bh = torch.nn.Parameter().new_empty((hidden_size), requires_grad=True)
         self.activation = torch.nn.Tanh()
         self.dropout = nn.Dropout(p=1 - dp_keep_prob)
 
