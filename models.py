@@ -48,15 +48,16 @@ def clones(module, N):
 class RNNBlock(nn.Module):
     def __init__(self, emb_size, hidden_size, dp_keep_prob):
         super().__init__()
+        self.dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.Wx = torch.nn.Linear(emb_size, hidden_size, bias=False)
         self.Wh = torch.nn.Linear(hidden_size, hidden_size)
         self.activation = torch.nn.Tanh()
-        self.dropout = nn.Dropout(p=1 - dp_keep_prob)
 
     def forward(self, inputs, hidden):
+        inputs = self.dropout(inputs)
         A = self.Wx(inputs)
-        B =  self.Wh(hidden) # bias is here
-        out = self.dropout(self.activation(A + B))
+        B = self.Wh(hidden)  # bias is here
+        out = self.activation(A + B)
         return out
 
 
@@ -99,12 +100,12 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.num_layers = num_layers
         self.dp_keep_prob = dp_keep_prob
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
-        self.embedding_dropout = nn.Dropout(p=1 - dp_keep_prob)
+        self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         first_rnn_block = RNNBlock(emb_size, hidden_size, dp_keep_prob)
         additional_rnn_blocks = clones(RNNBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
         self.rnn_blocks = nn.ModuleList([first_rnn_block]).extend(additional_rnn_blocks)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
-        self.layers = nn.ModuleList([self.embedding, self.embedding_dropout, *self.rnn_blocks, self.output_layer])
+        self.layers = nn.ModuleList([self.embedding, *self.rnn_blocks, self.output_dropout, self.output_layer])
 
     def init_weights(self):
         # TODO ========================
@@ -112,13 +113,12 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # and output biases to 0 (in place). The embeddings should not use a bias vector.
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
-        # self.embedding.weight.data.set_(torch.from_numpy(np.random.uniform(low=-0.1, high=0.1,
-        #                                                                    size=self.embedding.weight.data.shape)))
+
         torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
         torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
         torch.nn.init.constant_(self.output_layer.bias, 0.)
 
-        k = np.sqrt(1/self.hidden_size)
+        k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
             torch.nn.init.uniform_(layer.Wx.weight, a=-k, b=k)
             torch.nn.init.uniform_(layer.Wh.weight, a=-k, b=k)
@@ -132,7 +132,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         """
         # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
 
-        return  torch.from_numpy(np.zeros((self.num_layers, self.batch_size, self.hidden_size), dtype=np.float32))
+        return torch.from_numpy(np.zeros((self.num_layers, self.batch_size, self.hidden_size), dtype=np.float32))
 
     def forward(self, inputs, hidden):
         # TODO ========================
@@ -170,14 +170,16 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                   if you are curious.
                         shape: (num_layers, batch_size, hidden_size)
         """
+        # TODO the problem is that I apply drop out to the hidden state when transfering to next hidden state !
         logits = []
         for xbt in inputs:
             out = self.embedding(xbt)
-            out = self.embedding_dropout(out)
+            out = self.output_dropout(out)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
                 out = layer.forward(out, hidden[i])
                 next_hidden.append(out)
+            out = self.output_dropout(out)
             out = self.output_layer(out)
             logits.append(out)
             hidden = next_hidden
@@ -212,7 +214,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                         shape: (generated_seq_len, batch_size)
         """
 
-        #return samples
+        # return samples
 
 
 # Problem 2
@@ -301,7 +303,6 @@ and a linear layer followed by a softmax.
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 
 
 # ----------------------------------------------------------------------------------
