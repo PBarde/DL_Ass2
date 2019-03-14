@@ -49,15 +49,12 @@ class RNNBlock(nn.Module):
     def __init__(self, input_size, hidden_size, dp_keep_prob):
         super().__init__()
         self.dropout = nn.Dropout(p=1 - dp_keep_prob)
-        self.Wx = torch.nn.Linear(input_size, hidden_size, bias=False)
-        self.Wh = torch.nn.Linear(hidden_size, hidden_size)
+        self.W = torch.nn.Linear(input_size + hidden_size, hidden_size)
         self.activation = torch.nn.Tanh()
 
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
-        A = self.Wx(inputs)
-        B = self.Wh(hidden)  # bias is here
-        out = self.activation(A + B)
+        out = self.activation(self.W(torch.cat([inputs, hidden],1)))
         return out
 
 
@@ -122,9 +119,8 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
 
         k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
-            torch.nn.init.uniform_(layer.Wx.weight, a=-k, b=k)
-            torch.nn.init.uniform_(layer.Wh.weight, a=-k, b=k)
-            torch.nn.init.uniform_(layer.Wh.bias, a=-k, b=k)
+            torch.nn.init.uniform_(layer.W.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.W.bias, a=-k, b=k)
 
         torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
         torch.nn.init.constant_(self.output_layer.bias, 0.)
