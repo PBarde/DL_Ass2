@@ -46,10 +46,10 @@ def clones(module, N):
 
 # TODO Try concatenating input and hidden to have only one matrix
 class RNNBlock(nn.Module):
-    def __init__(self, emb_size, hidden_size, dp_keep_prob):
+    def __init__(self, input_size, hidden_size, dp_keep_prob):
         super().__init__()
         self.dropout = nn.Dropout(p=1 - dp_keep_prob)
-        self.Wx = torch.nn.Linear(emb_size, hidden_size, bias=False)
+        self.Wx = torch.nn.Linear(input_size, hidden_size, bias=False)
         self.Wh = torch.nn.Linear(hidden_size, hidden_size)
         self.activation = torch.nn.Tanh()
 
@@ -102,7 +102,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.dp_keep_prob = dp_keep_prob
 
         #layers
-        self.embedding = WordEmbedding(n_units=emb_size, vocab=vocab_size)
+        self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
         first_rnn_block = RNNBlock(emb_size, hidden_size, dp_keep_prob)
         additional_rnn_blocks = clones(RNNBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
         self.rnn_blocks = nn.ModuleList([first_rnn_block]).extend(additional_rnn_blocks)
@@ -118,7 +118,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
 
-        torch.nn.init.uniform_(self.embedding.lut.weight, a=-0.1, b=0.1)
+        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
 
         k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
@@ -175,7 +175,6 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                   if you are curious.
                         shape: (num_layers, batch_size, hidden_size)
         """
-        # TODO maybe try with a deepcopy of the hidden states
         logits = []
         for xbt in inputs:
             out = self.embedding(xbt)
