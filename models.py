@@ -112,19 +112,18 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # and output biases to 0 (in place). The embeddings should not use a bias vector.
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
-        self.embedding.weight.data.set_(torch.from_numpy(np.random.uniform(low=-0.1, high=0.1,
-                                                                           size=self.embedding.weight.data.shape)))
-        self.output_layer.weight.data.set_(torch.from_numpy(np.random.uniform(low=-0.1, high=0.1,
-                                                                           size=self.output_layer.weight.data.shape)))
-        self.output_layer.bias.data.set_(self.output_layer.bias.data.new_zeros(self.output_layer.bias.data.shape))
-        k = np.sqrt(self.hidden_size)
+        # self.embedding.weight.data.set_(torch.from_numpy(np.random.uniform(low=-0.1, high=0.1,
+        #                                                                    size=self.embedding.weight.data.shape)))
+        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
+        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
+        torch.nn.init.constant_(self.output_layer.bias, 0.)
+
+        k = np.sqrt(1/self.hidden_size)
         for layer in self.rnn_blocks:
-            layer.Wx.weight.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
-                                                                           size=layer.Wx.data.shape)))
-            layer.Wh.weight.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
-                                                                  size=layer.Wh.data.shape)))
-            layer.Wh.bias.data.set_(torch.from_numpy(np.random.uniform(low=-k, high=k,
-                                                                  size=layer.bh.data.shape)))
+            torch.nn.init.uniform_(layer.Wx.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wh.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wh.bias, a=-k, b=k)
+
     def init_hidden(self):
         # TODO ========================
         # initialize the hidden states to zero
