@@ -92,6 +92,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # and compute their gradients automatically. You're not obligated to use the
         # provided clones function.
 
+        #Parameters
         self.emb_size = emb_size
         self.hidden_size = hidden_size
         self.seq_len = seq_len
@@ -99,12 +100,15 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.vocab_size = vocab_size
         self.num_layers = num_layers
         self.dp_keep_prob = dp_keep_prob
+
+        #layers
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
-        self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         first_rnn_block = RNNBlock(emb_size, hidden_size, dp_keep_prob)
         additional_rnn_blocks = clones(RNNBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
         self.rnn_blocks = nn.ModuleList([first_rnn_block]).extend(additional_rnn_blocks)
+        self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
+
         self.layers = nn.ModuleList([self.embedding, *self.rnn_blocks, self.output_dropout, self.output_layer])
 
     def init_weights(self):
@@ -170,11 +174,9 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                   if you are curious.
                         shape: (num_layers, batch_size, hidden_size)
         """
-        # TODO the problem is that I apply drop out to the hidden state when transfering to next hidden state !
         logits = []
         for xbt in inputs:
             out = self.embedding(xbt)
-            out = self.output_dropout(out)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
                 out = layer.forward(out, hidden[i])
