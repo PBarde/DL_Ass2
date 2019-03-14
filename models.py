@@ -119,14 +119,15 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # in the range [-k, k] where k is the square root of 1/hidden_size
 
         torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
-        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
-        torch.nn.init.constant_(self.output_layer.bias, 0.)
 
         k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
             torch.nn.init.uniform_(layer.Wx.weight, a=-k, b=k)
             torch.nn.init.uniform_(layer.Wh.weight, a=-k, b=k)
             torch.nn.init.uniform_(layer.Wh.bias, a=-k, b=k)
+
+        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
+        torch.nn.init.constant_(self.output_layer.bias, 0.)
 
     def init_hidden(self):
         # TODO ========================
@@ -174,13 +175,14 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                   if you are curious.
                         shape: (num_layers, batch_size, hidden_size)
         """
+        # TODO maybe try with a deepcopy of the hidden states
         logits = []
         for xbt in inputs:
             out = self.embedding(xbt)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
                 out = layer.forward(out, hidden[i])
-                next_hidden.append(out)
+                next_hidden.append(copy.deepcopy(out))
             out = self.output_dropout(out)
             out = self.output_layer(out)
             logits.append(out)
