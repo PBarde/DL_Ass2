@@ -182,7 +182,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
                 out = layer.forward(out, hidden[i])
-                next_hidden.append(copy.deepcopy(out))
+                next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
             logits.append(out)
