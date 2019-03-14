@@ -44,7 +44,7 @@ def clones(module, N):
 
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
-
+# TODO Try concatenating input and hidden to have only one matrix
 class RNNBlock(nn.Module):
     def __init__(self, emb_size, hidden_size, dp_keep_prob):
         super().__init__()
@@ -102,7 +102,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.dp_keep_prob = dp_keep_prob
 
         #layers
-        self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
+        self.embedding = WordEmbedding(n_units=emb_size, vocab=vocab_size)
         first_rnn_block = RNNBlock(emb_size, hidden_size, dp_keep_prob)
         additional_rnn_blocks = clones(RNNBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
         self.rnn_blocks = nn.ModuleList([first_rnn_block]).extend(additional_rnn_blocks)
@@ -118,7 +118,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
 
-        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
+        torch.nn.init.uniform_(self.embedding.lut.weight, a=-0.1, b=0.1)
 
         k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
@@ -190,6 +190,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
 
         logits = torch.stack(logits)
         hidden = torch.stack(hidden)
+        print(hidden)
         return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
 
     def generate(self, input, hidden, generated_seq_len):
