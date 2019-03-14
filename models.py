@@ -64,13 +64,14 @@ class GRUBlock(nn.Module):
         self.Wr = torch.nn.Linear(input_size + hidden_size, hidden_size)
         self.Wz = torch.nn.Linear(input_size + hidden_size, hidden_size)
         self.Wh = torch.nn.Linear(input_size + hidden_size, hidden_size)
-        self.activation = torch.nn.Tanh()
+        self.tanh = torch.nn.Tanh()
+        self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
-        r = self.Wr(torch.cat([inputs, hidden], 1))
-        z = self.Wr(torch.cat([inputs, hidden], 1))
-        h_hat = self.Wr(torch.cat([inputs, r*hidden], 1))
+        r = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
+        z = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
+        h_hat = self.tanh(self.Wr(torch.cat([inputs, r*hidden], 1)))
         out = (1-z)*hidden + z*h_hat
         return out
 
