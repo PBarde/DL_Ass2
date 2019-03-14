@@ -44,7 +44,7 @@ def clones(module, N):
 
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
-# TODO Try concatenating input and hidden to have only one matrix
+
 class RNNBlock(nn.Module):
     def __init__(self, input_size, hidden_size, dp_keep_prob):
         super().__init__()
@@ -57,6 +57,22 @@ class RNNBlock(nn.Module):
         out = self.activation(self.W(torch.cat([inputs, hidden],1)))
         return out
 
+class GRUBlock(nn.Module):
+    def __init__(self, input_size, hidden_size, dp_keep_prob):
+        super().__init__()
+        self.dropout = nn.Dropout(p=1 - dp_keep_prob)
+        self.Wr = torch.nn.Linear(input_size + hidden_size, hidden_size)
+        self.Wz = torch.nn.Linear(input_size + hidden_size, hidden_size)
+        self.Wh = torch.nn.Linear(input_size + hidden_size, hidden_size)
+        self.activation = torch.nn.Tanh()
+
+    def forward(self, inputs, hidden):
+        inputs = self.dropout(inputs)
+        r = self.Wr(torch.cat([inputs, hidden], 1))
+        z = self.Wr(torch.cat([inputs, hidden], 1))
+        h_hat = self.Wr(torch.cat([inputs, r*hidden], 1))
+        out = (1-z)*hidden + z*h_hat
+        return out
 
 # Problem 1
 class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearities.
@@ -133,7 +149,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         """
         # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
 
-        return torch.from_numpy(np.zeros((self.num_layers, self.batch_size, self.hidden_size), dtype=np.float32))
+        return torch.Tensor(self.num_layers, self.batch_size, self.hidden_size).fill_(0.)
 
     def forward(self, inputs, hidden):
         # TODO ========================
@@ -212,8 +228,25 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             - Sampled sequences of tokens
                         shape: (generated_seq_len, batch_size)
         """
+        softmax = torch.nn.Softmax()
+        samples = []
+        x_hat = input
+        for _ in generated_seq_len:
+            out = self.embedding(x_hat)
+            next_hidden = []
+            for i, layer in enumerate(self.rnn_blocks):
+                out = layer.forward(out, hidden[i])
+                next_hidden.append(out)
+            out = self.output_dropout(out)
+            out = self.output_layer(out)
+            out = softmax(out)
+            sample = torch.distributions.categorical.Categorical(out).sample()
+            samples.append(sample)
+            hidden = next_hidden
 
-        # return samples
+        samples = torch.stack(samples)
+
+        return samples
 
 
 # Problem 2
@@ -227,21 +260,82 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
         super(GRU, self).__init__()
 
         # TODO ========================
+        # Parameters
+        self.emb_size = emb_size
+        self.hidden_size = hidden_size
+        self.seq_len = seq_len
+        self.batch_size = batch_size
+        self.vocab_size = vocab_size
+        self.num_layers = num_layers
+        self.dp_keep_prob = dp_keep_prob
+
+        # layers
+        self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
+        first_gru_block = GRUBlock(emb_size, hidden_size, dp_keep_prob)
+        additional_gru_blocks = clones(GRUBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
+        self.gru_blocks = nn.ModuleList([first_gru_block]).extend(additional_gru_blocks)
+        self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
+        self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
 
     def init_weights_uniform(self):
         # TODO ========================
-        pass
+        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
+
+        k = np.sqrt(1. / self.hidden_size)
+        for layer in self.gru_blocks:
+            torch.nn.init.uniform_(layer.Wr.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wr.bias, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wz.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wz.bias, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wh.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.Wh.bias, a=-k, b=k)
+
+        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
+        torch.nn.init.constant_(self.output_layer.bias, 0.)
 
     def init_hidden(self):
         # TODO ========================
-        return  # a parameter tensor of shape (self.num_layers, self.batch_size, self.hidden_size)
+        return  torch.Tensor(self.num_layers, self.batch_size, self.hidden_size).fill_(0.)
 
     def forward(self, inputs, hidden):
         # TODO ========================
+        logits = []
+        for xbt in inputs:
+            out = self.embedding(xbt)
+            next_hidden = []
+            for i, layer in enumerate(self.gru_blocks):
+                out = layer.forward(out, hidden[i])
+                next_hidden.append(out)
+            out = self.output_dropout(out)
+            out = self.output_layer(out)
+            logits.append(out)
+            hidden = next_hidden
+
+        logits = torch.stack(logits)
+        hidden = torch.stack(hidden)
         return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
+
 
     def generate(self, input, hidden, generated_seq_len):
         # TODO ========================
+
+        softmax = torch.nn.Softmax()
+        samples = []
+        x_hat = input
+        for _ in generated_seq_len:
+            out = self.embedding(x_hat)
+            next_hidden = []
+            for i, layer in enumerate(self.rnn_blocks):
+                out = layer.forward(out, hidden[i])
+                next_hidden.append(out)
+            out = self.output_dropout(out)
+            out = self.output_layer(out)
+            out = softmax(out)
+            sample = torch.distributions.categorical.Categorical(out).sample()
+            samples.append(sample)
+            hidden = next_hidden
+
+        samples = torch.stack(samples)
         return samples
 
 
