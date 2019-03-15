@@ -204,7 +204,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             out = self.output_dropout(out)
             out = self.output_layer(out)
             logits.append(out)
-            hidden = next_hidden
+            hidden = torch.stack(next_hidden)
 
         logits = torch.stack(logits)
         hidden = torch.stack(hidden)
