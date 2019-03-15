@@ -71,7 +71,7 @@ class GRUBlock(nn.Module):
         inputs = self.dropout(inputs)
         r = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
         z = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
-        h_hat = self.tanh(self.Wr(torch.cat([inputs, r*hidden], 1)))
+        h_hat = self.tanh(self.Wh(torch.cat([inputs, r*hidden], 1)))
         out = (1-z)*hidden + z*h_hat
         return out
 
@@ -132,15 +132,24 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
 
-        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
+        # torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
+        #
+        # k = np.sqrt(1 / self.hidden_size)
+        # for layer in self.rnn_blocks:
+        #     torch.nn.init.uniform_(layer.W.weight, a=-k, b=k)
+        #     torch.nn.init.uniform_(layer.W.bias, a=-k, b=k)
+        #
+        # torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
+        # torch.nn.init.constant_(self.output_layer.bias, 0.)
+        self.embedding.weight.data.uniform_(a=-0.1, b=0.1)
 
         k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
-            torch.nn.init.uniform_(layer.W.weight, a=-k, b=k)
-            torch.nn.init.uniform_(layer.W.bias, a=-k, b=k)
+            layer.W.weight.data.uniform_(a=-k, b=k)
+            layer.W.bias.data.uniform_(a=-k, b=k)
 
-        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
-        torch.nn.init.constant_(self.output_layer.bias, 0.)
+        self.output_layer.weight.data.uniform_(a=-0.1, b=0.1)
+        self.output_layer.bias.data.fill_(0.)
 
     def init_hidden(self):
         # TODO ========================
