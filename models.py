@@ -120,8 +120,6 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
 
-        self.layers = nn.ModuleList([self.embedding, *self.rnn_blocks, self.output_dropout, self.output_layer])
-
     def init_weights(self):
         # TODO ========================
         # Initialize the embedding and output weights uniformly in the range [-0.1, 0.1]
@@ -204,9 +202,10 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             out = self.output_dropout(out)
             out = self.output_layer(out)
             logits.append(out)
-            hidden = torch.stack(next_hidden)
+            hidden = next_hidden
 
         logits = torch.stack(logits)
+        hidden = torch.stack(hidden)
         return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
 
     def generate(self, input, hidden, generated_seq_len):
