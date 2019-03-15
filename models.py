@@ -53,8 +53,9 @@ class RNNBlock(nn.Module):
 
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
-        out = torch.tanh(self.W(torch.cat([inputs, hidden],1)))
+        out = torch.tanh(self.W(torch.cat([inputs, hidden], 1)))
         return out
+
 
 class GRUBlock(nn.Module):
     def __init__(self, input_size, hidden_size, dp_keep_prob):
@@ -68,9 +69,10 @@ class GRUBlock(nn.Module):
         inputs = self.dropout(inputs)
         r = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
         z = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
-        h_hat = torch.tanh(self.Wh(torch.cat([inputs, r*hidden], 1)))
-        out = (1-z)*hidden + z*h_hat
+        h_hat = torch.tanh(self.Wh(torch.cat([inputs, r * hidden], 1)))
+        out = (1 - z) * hidden + z * h_hat
         return out
+
 
 # Problem 1
 class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearities.
@@ -103,7 +105,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # and compute their gradients automatically. You're not obligated to use the
         # provided clones function.
 
-        #Parameters
+        # Parameters
         self.emb_size = emb_size
         self.hidden_size = hidden_size
         self.seq_len = seq_len
@@ -112,13 +114,15 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         self.num_layers = num_layers
         self.dp_keep_prob = dp_keep_prob
 
-        #layers
+        # layers
         self.embedding = nn.Embedding(num_embeddings=vocab_size, embedding_dim=emb_size)
         first_rnn_block = RNNBlock(emb_size, hidden_size, dp_keep_prob)
         additional_rnn_blocks = clones(RNNBlock(hidden_size, hidden_size, dp_keep_prob), num_layers - 1)
         self.rnn_blocks = nn.ModuleList([first_rnn_block]).extend(additional_rnn_blocks)
         self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
+
+        self.init_weights()
 
     def init_weights(self):
         # TODO ========================
@@ -127,24 +131,15 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # Initialize all other (i.e. recurrent and linear) weights AND biases uniformly
         # in the range [-k, k] where k is the square root of 1/hidden_size
 
-        # torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
-        #
-        # k = np.sqrt(1 / self.hidden_size)
-        # for layer in self.rnn_blocks:
-        #     torch.nn.init.uniform_(layer.W.weight, a=-k, b=k)
-        #     torch.nn.init.uniform_(layer.W.bias, a=-k, b=k)
-        #
-        # torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
-        # torch.nn.init.constant_(self.output_layer.bias, 0.)
-        self.embedding.weight.data.uniform_(a=-0.1, b=0.1)
+        torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
 
-        k = torch.sqrt(1 / self.hidden_size)
+        k = np.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
-            layer.W.weight.data.uniform_(a=-k, b=k)
-            layer.W.bias.data.uniform_(a=-k, b=k)
+            torch.nn.init.uniform_(layer.W.weight, a=-k, b=k)
+            torch.nn.init.uniform_(layer.W.bias, a=-k, b=k)
 
-        self.output_layer.weight.data.uniform_(a=-0.1, b=0.1)
-        self.output_layer.bias.data.fill_(0.)
+        torch.nn.init.uniform_(self.output_layer.weight, a=-0.1, b=0.1)
+        torch.nn.init.constant_(self.output_layer.bias, 0.)
 
     def init_hidden(self):
         # TODO ========================
@@ -282,6 +277,8 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
         self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
 
+        self.init_weights()
+
     def init_weights_uniform(self):
         # TODO ========================
         torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
@@ -300,7 +297,7 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
 
     def init_hidden(self):
         # TODO ========================
-        return  torch.Tensor(self.num_layers, self.batch_size, self.hidden_size).fill_(0.)
+        return torch.Tensor(self.num_layers, self.batch_size, self.hidden_size).fill_(0.)
 
     def forward(self, inputs, hidden):
         # TODO ========================
@@ -319,7 +316,6 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
         logits = torch.stack(logits)
         hidden = torch.stack(hidden)
         return logits.view(self.seq_len, self.batch_size, self.vocab_size), hidden
-
 
     def generate(self, input, hidden, generated_seq_len):
         # TODO ========================
