@@ -199,7 +199,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             out = self.embedding(xbt)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
-                out = layer.forward(out, hidden[i])
+                out = layer(out, hidden[i])
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
@@ -241,7 +241,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             out = self.embedding(x_hat)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
-                out = layer.forward(out, hidden[i])
+                out = layer(out, hidden[i])
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
@@ -310,7 +310,7 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
             out = self.embedding(xbt)
             next_hidden = []
             for i, layer in enumerate(self.gru_blocks):
-                out = layer.forward(out, hidden[i])
+                out = layer(out, hidden[i])
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
@@ -331,7 +331,7 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
             out = self.embedding(x_hat)
             next_hidden = []
             for i, layer in enumerate(self.rnn_blocks):
-                out = layer.forward(out, hidden[i])
+                out = layer(out, hidden[i])
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
