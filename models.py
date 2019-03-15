@@ -50,11 +50,10 @@ class RNNBlock(nn.Module):
         super().__init__()
         self.dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.W = torch.nn.Linear(input_size + hidden_size, hidden_size)
-        self.activation = torch.nn.Tanh()
 
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
-        out = self.activation(self.W(torch.cat([inputs, hidden],1)))
+        out = torch.tanh(self.W(torch.cat([inputs, hidden],1)))
         return out
 
 class GRUBlock(nn.Module):
@@ -64,14 +63,12 @@ class GRUBlock(nn.Module):
         self.Wr = torch.nn.Linear(input_size + hidden_size, hidden_size)
         self.Wz = torch.nn.Linear(input_size + hidden_size, hidden_size)
         self.Wh = torch.nn.Linear(input_size + hidden_size, hidden_size)
-        self.tanh = torch.nn.Tanh()
-        self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
-        r = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
-        z = self.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
-        h_hat = self.tanh(self.Wh(torch.cat([inputs, r*hidden], 1)))
+        r = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
+        z = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
+        h_hat = torch.tanh(self.Wh(torch.cat([inputs, r*hidden], 1)))
         out = (1-z)*hidden + z*h_hat
         return out
 
@@ -143,7 +140,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
         # torch.nn.init.constant_(self.output_layer.bias, 0.)
         self.embedding.weight.data.uniform_(a=-0.1, b=0.1)
 
-        k = np.sqrt(1 / self.hidden_size)
+        k = torch.sqrt(1 / self.hidden_size)
         for layer in self.rnn_blocks:
             layer.W.weight.data.uniform_(a=-k, b=k)
             layer.W.bias.data.uniform_(a=-k, b=k)
@@ -238,7 +235,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
             - Sampled sequences of tokens
                         shape: (generated_seq_len, batch_size)
         """
-        softmax = torch.nn.Softmax()
+
         samples = []
         x_hat = input
         for _ in generated_seq_len:
@@ -249,7 +246,7 @@ class RNN(nn.Module):  # Implement a stacked vanilla RNN with Tanh nonlinearitie
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
-            out = softmax(out)
+            out = F.softmax(out)
             sample = torch.distributions.categorical.Categorical(out).sample()
             samples.append(sample)
             hidden = next_hidden
@@ -329,7 +326,6 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
     def generate(self, input, hidden, generated_seq_len):
         # TODO ========================
 
-        softmax = torch.nn.Softmax()
         samples = []
         x_hat = input
         for _ in generated_seq_len:
@@ -340,7 +336,7 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
                 next_hidden.append(out)
             out = self.output_dropout(out)
             out = self.output_layer(out)
-            out = softmax(out)
+            out = torch.softmax(out)
             sample = torch.distributions.categorical.Categorical(out).sample()
             samples.append(sample)
             hidden = next_hidden
