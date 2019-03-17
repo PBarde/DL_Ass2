@@ -279,7 +279,8 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
 
         self.init_weights()
 
-    def init_weights_uniform(self):
+    #def init_weights_uniform(self):
+    def init_weights(self):
         # TODO ========================
         torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
 
