@@ -68,7 +68,7 @@ class GRUBlock(nn.Module):
     def forward(self, inputs, hidden):
         inputs = self.dropout(inputs)
         r = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
-        z = torch.sigmoid(self.Wr(torch.cat([inputs, hidden], 1)))
+        z = torch.sigmoid(self.Wz(torch.cat([inputs, hidden], 1)))
         h_hat = torch.tanh(self.Wh(torch.cat([inputs, r * hidden], 1)))
         out = (1 - z) * hidden + z * h_hat
         return out
