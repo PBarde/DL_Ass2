@@ -480,10 +480,14 @@ class MultiHeadedAttention(nn.Module):
         # As described in the .tex, apply input masking to the softmax 
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
-        Z_cat = torch.Tensor()
+        Z_cat = []
+
         for i, head in enumerate(self.heads):
             H_i = self.attention_dropout(head(query, key, value, mask))
-            Z_cat = torch.cat((Z_cat, H_i), dim=2)
+            if i == 0:
+                Z_cat = H_i.clone()
+            else:
+                Z_cat = torch.cat((Z_cat, H_i), dim=2)
 
         Z = self.Wo(Z_cat)
         return Z  # size: (batch_size, seq_len, self.n_units)
