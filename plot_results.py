@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-EXP_NAME = "RNN_base"
+# EXP_NAME = "RNN_base"
+EXP_NAME = "RNN_SGD"
 
 
 def parse_config():
@@ -80,9 +81,9 @@ def plot_curves(curves, wall_clock_times):
 
     # train & val loss by wall-clock-time
     fig, ax = plt.subplots()
-    ax.plot(curves["train_losses"], label="train_losses")
+    ax.plot(wall_clock_times, curves["train_losses"], label="train_losses")
     ax.legend()
-    ax.plot(curves["val_losses"], label="val_losses")
+    ax.plot(wall_clock_times, curves["val_losses"], label="val_losses")
     ax.legend()
     ax.set(xlabel='wall-clock-time (h)', ylabel='loss', title='loss by wall-clock-time')
     ax.grid()
