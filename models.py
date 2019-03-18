@@ -277,10 +277,9 @@ class GRU(nn.Module):  # Implement a stacked GRU RNN
         self.output_dropout = nn.Dropout(p=1 - dp_keep_prob)
         self.output_layer = nn.Linear(in_features=hidden_size, out_features=vocab_size)
 
-        self.init_weights()
+        self.init_weights_uniform()
 
-    #def init_weights_uniform(self):
-    def init_weights(self):
+    def init_weights_uniform(self):
         # TODO ========================
         torch.nn.init.uniform_(self.embedding.weight, a=-0.1, b=0.1)
 
