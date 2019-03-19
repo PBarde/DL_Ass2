@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # EXP_NAME = "RNN_base"
-EXP_NAME = "RNN_SGD"
+# EXP_NAME = "RNN_SGD"
+EXP_NAME = "RNN_SGD_LR_SCHEDULE"
 
 
 def parse_config():
@@ -55,7 +56,7 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.plot(curves["val_ppls"], label="val_ppls")
     ax.legend()
-    ax.set(xlabel='epoch', ylabel='ppl', title='ppl per epoch')
+    ax.set(xlabel='epoch', ylabel='ppl', title=EXP_NAME)
     ax.grid()
     plt.show()
 
@@ -65,7 +66,7 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.plot(wall_clock_times, curves["val_ppls"], label="val_ppls")
     ax.legend()
-    ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title='ppl by wall-clock-time')
+    ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title=EXP_NAME)
     ax.grid()
     plt.show()
 
@@ -75,7 +76,7 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.plot(curves["val_losses"], label="val_losses")
     ax.legend()
-    ax.set(xlabel='epoch', ylabel='loss', title='loss per epoch')
+    ax.set(xlabel='epoch', ylabel='loss', title=EXP_NAME)
     ax.grid()
     plt.show()
 
@@ -85,7 +86,7 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.plot(wall_clock_times, curves["val_losses"], label="val_losses")
     ax.legend()
-    ax.set(xlabel='wall-clock-time (h)', ylabel='loss', title='loss by wall-clock-time')
+    ax.set(xlabel='wall-clock-time (h)', ylabel='loss', title=EXP_NAME)
     ax.grid()
     plt.show()
 
