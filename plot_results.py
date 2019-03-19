@@ -1,9 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 # EXP_NAME = "RNN_base"
 # EXP_NAME = "RNN_SGD"
-EXP_NAME = "RNN_SGD_LR_SCHEDULE"
+# EXP_NAME = "RNN_SGD_LR_SCHEDULE"
+# EXP_NAME = "GRU_SGD"
+# EXP_NAME = "GRU_SGD_LR_SCHEDULE"
+# EXP_NAME = "GRU_ADAM"
+# EXP_NAME = "GRU_SGD_LR_SCHEDULE_HIDDENSIZE_2200"
+# EXP_NAME = "GRU_SGD_LR_SCHEDULE_NUMLAYERS_3"
+# EXP_NAME = "GRU_SGD_LR_SCHEDULE_SEQLEN_50"
 
 
 def parse_config():
@@ -14,22 +21,27 @@ def parse_config():
     for i in lines:
         values = i[:-1].split("    ")
         exp_config[values[0]] = values[1]
-    print(exp_config)
     return exp_config
 
 
 def parse_log():
     wall_clock_times = []
+    best_ppl_pair = ()
     cumulative_wall_clock_time = 0
     f = open(f'experiences/{EXP_NAME}/log.txt', 'r')
     lines = f.readlines()
     f.close()
     for i in lines:
-        values = i[:-1].split("time (s) spent in epoch: ")
-        cumulative_wall_clock_time += float(values[1]) / 3600
+        values = i.split("\t")
+        train_ppl = float(values[1].split("train ppl: ")[1])
+        val_ppl = float(values[2].split("val ppl: ")[1])
+        if best_ppl_pair == () or val_ppl < best_ppl_pair[1]:
+            best_ppl_pair = (train_ppl, val_ppl)
+        wall_clock_time = float(values[4][:-1].split("time (s) spent in epoch: ")[1])
+        cumulative_wall_clock_time += wall_clock_time / 3600
         wall_clock_times.append(cumulative_wall_clock_time)
-    print(wall_clock_times)
-    return wall_clock_times
+    print(f'{EXP_NAME}\t{best_ppl_pair[0]}\t{best_ppl_pair[1]}')
+    return best_ppl_pair, wall_clock_times
 
 
 def parse_learning_curves(exp_config):
@@ -37,9 +49,7 @@ def parse_learning_curves(exp_config):
     learning_curves = np.load(f'experiences/{EXP_NAME}/learning_curves.npy')[()]
     curves = {}
     for curve in learning_curves:
-        print(curve)
         array = np.array(learning_curves[curve])
-        print(array.shape)
 
         if "losses" in curve:
             steps = int(array.shape[0] / epochs)
@@ -58,7 +68,9 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.set(xlabel='epoch', ylabel='ppl', title=EXP_NAME)
     ax.grid()
-    plt.show()
+    plt.savefig(f'experiences/{EXP_NAME}/{EXP_NAME.lower()}_epoch.png')
+    # plt.show()
+    plt.close()
 
     # train & val ppl by wall-clock-time
     fig, ax = plt.subplots()
@@ -68,7 +80,9 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title=EXP_NAME)
     ax.grid()
-    plt.show()
+    plt.savefig(f'experiences/{EXP_NAME}/{EXP_NAME.lower()}_wall_clock_time.png')
+    # plt.show()
+    plt.close()
 
     # train & val loss per epoch
     fig, ax = plt.subplots()
@@ -78,7 +92,8 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.set(xlabel='epoch', ylabel='loss', title=EXP_NAME)
     ax.grid()
-    plt.show()
+    # plt.show()
+    plt.close()
 
     # train & val loss by wall-clock-time
     fig, ax = plt.subplots()
@@ -88,10 +103,12 @@ def plot_curves(curves, wall_clock_times):
     ax.legend()
     ax.set(xlabel='wall-clock-time (h)', ylabel='loss', title=EXP_NAME)
     ax.grid()
-    plt.show()
+    # plt.show()
+    plt.close()
 
 
-exp_config = parse_config()
-wall_clock_times = parse_log()
-curves = parse_learning_curves(exp_config)
-plot_curves(curves, wall_clock_times)
+for EXP_NAME in os.listdir('experiences'):
+    exp_config = parse_config()
+    ppls, wall_clock_times = parse_log()
+    curves = parse_learning_curves(exp_config)
+    plot_curves(curves, wall_clock_times)
