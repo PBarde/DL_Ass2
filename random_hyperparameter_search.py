@@ -41,21 +41,16 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
 
 
 def start_process_with_config(config):
-    #command_string = "python ptb-lm.py"
-    command_string = "ptb-lm.py"
+    command_string = "./ptb-lm.py"
     args = [command_string]
     for key, value in config.items():
-        #command_string += f" --{key}={value}"
-        args.append(f" --{key}={value}")
-    # process = subprocess.Popen(command_string, shell=False)
+        args.append(f"--{key}={value}")
     process = subprocess.Popen(args)
     return process
 
 
 def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
     time.sleep(30)
-    kill_process(process)
-    return
     need_to_kill = False
     xp_folder = ""
     search_name = f"{random_search_experience_name}_{xp_id}_"
@@ -100,13 +95,8 @@ def parse_log(xp_folder):
 
 
 def kill_process(process):
-    # os.killpg(os.getpgid(process.pid), signal.SIGINT)
     print("Killing process", process.pid)
     process.kill()
-    # try:
-    #     process.kill()
-    # except OSError:
-    #     print("Failed to kill the process")
 
 
 # ========== MAIN ==========
