@@ -2,16 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-# EXP_NAME = "RNN_base"
-# EXP_NAME = "RNN_SGD"
-# EXP_NAME = "RNN_SGD_LR_SCHEDULE"
-# EXP_NAME = "GRU_SGD"
-# EXP_NAME = "GRU_SGD_LR_SCHEDULE"
-# EXP_NAME = "GRU_ADAM"
-# EXP_NAME = "GRU_SGD_LR_SCHEDULE_HIDDENSIZE_2200"
-# EXP_NAME = "GRU_SGD_LR_SCHEDULE_NUMLAYERS_3"
-# EXP_NAME = "GRU_SGD_LR_SCHEDULE_SEQLEN_50"
-
 
 def parse_config():
     exp_config = {}
