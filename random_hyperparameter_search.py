@@ -44,7 +44,7 @@ def start_process_with_config(config):
     command_string = "python ptb-lm.py"
     for key, value in config.items():
         command_string += f" --{key}={value}"
-    process = subprocess.Popen(command_string, shell=False)#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(command_string, shell=True)
     return process
 
 
@@ -96,7 +96,6 @@ def parse_log(xp_folder):
 
 
 def kill_process(process):
-    os.getpgid()
     os.killpg(os.getpgid(process.pid), signal.SIGINT)
     # try:
     #     process.kill()
