@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import signal
 import subprocess
 import datetime
 import time
@@ -63,7 +62,7 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
         if current_epoch >= 0:
             if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
                 print(f"Stopping training because current ppl values did not beat the ones of the base xp "
-                      f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]}")
+                      f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
                 need_to_kill = True
                 break
         if current_epoch == 39:
@@ -91,7 +90,10 @@ def parse_log(xp_folder):
 
 
 def kill_process(process):
-    os.killpg(process.pid, signal.SIGTERM)
+    try:
+        process.kill()
+    except OSError:
+        print("Failed to kill the process")
 
 
 # ========== MAIN ==========
@@ -102,6 +104,7 @@ base_ppls = parse_log(f"experiences/{base_xp_name}")
 xp_id = 0
 while True:
     xp_id += 1
+    print(f"Generating experience {xp_id}")
     new_config = generate_new_config(base_config, random_search_experience_name, xp_id)
     process = start_process_with_config(new_config)
     monitor_process(process, random_search_experience_name, xp_id, base_ppls)
