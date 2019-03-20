@@ -4,7 +4,13 @@
 
 ### Running the script
 
-On a remote server, run the following command:
+On a remote server make sure you did the following steps:
+
+1. Pull the project
+2. Create the `experiences` folder
+3. Copy the folder of the experience you want to improve into that `experiences` folder
+
+And then run the following command:
 
 `nohup python -u random_hyperparameter_search.py BASE_XP_NAME &`
 
