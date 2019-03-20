@@ -30,8 +30,10 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
             new_random_value = float(value) + np.random.randn() * float(value) / 2
             if key in ['batch_size', 'emb_size', 'hidden_size', 'num_layers', 'seq_len']:
                 new_random_value = max(1, int(new_random_value))
-            if key in ['dk_keep_prob']:
-                new_random_value = max(0.05, min(0.95, float(new_random_value)))
+            if key in ['dp_keep_prob']:
+                new_random_value = max(0.1, min(0.9, float(new_random_value)))
+            if key in ['initial_lr']:
+                new_random_value = max(0.00001, float(new_random_value))
             new_random_config[key] = new_random_value
         elif key in ['model', 'optimizer']:
             new_random_config[key] = value
