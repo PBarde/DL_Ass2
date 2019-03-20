@@ -6,10 +6,9 @@ import datetime
 import time
 
 
-def create_random_search_folder(base_xp_name):
+def generate_random_search_experience_name(base_xp_name):
     now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    folder_name = f"experiences/random_search_{base_xp_name}_{now}"
-    os.mkdir(folder_name)
+    folder_name = f"random_search_{base_xp_name}_{now}"
     return folder_name
 
 
@@ -24,17 +23,17 @@ def parse_config(exp_name):
     return exp_config
 
 
-def generate_new_config(base_config, folder, xp_id):
+def generate_new_config(base_config, random_search_experience_name, xp_id):
     new_random_config = {}
     for key, value in base_config.items():
         if key in ['batch_size', 'dp_keep_prob', 'emb_size', 'hidden_size', 'initial_lr', 'num_layers', 'seq_len']:
-            new_random_value = np.random.randn() * float(value) / 2
+            new_random_value = float(value) + np.random.randn() * float(value) / 2
             if key in ['batch_size', 'emb_size', 'hidden_size', 'num_layers', 'seq_len']:
-                new_random_value = int(new_random_value)
+                new_random_value = max(1, int(new_random_value))
             new_random_config[key] = new_random_value
         elif key in ['model', 'optimizer']:
             new_random_config[key] = value
-    new_random_config['save_dir'] = f"{folder}/{xp_id}_"
+    new_random_config['save_dir'] = f"{random_search_experience_name}_{xp_id}_"
     return new_random_config
 
 
@@ -42,32 +41,40 @@ def start_process_with_config(config):
     command_string = "python ptb-lm.py"
     for key, value in config.items():
         command_string += f" --{key}={value}"
-    return subprocess.Popen(command_string)
+    return subprocess.Popen(command_string, shell=True)
 
 
-def monitor_process(process, folder, xp_id, base_ppls):
+def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
+    time.sleep(30)
     need_to_kill = False
     xp_folder = ""
-    for xp in os.listdir(folder):
-        if xp.startswith(xp_id + "_"):
+    search_name = f"{random_search_experience_name}_{xp_id}_"
+    for xp in os.listdir("./"):
+        if xp.startswith(search_name):
             xp_folder = xp
-    path = f'{folder}/{xp_folder}'
+            break
+    if xp_folder == "":
+        print("Failed to find folder that starts with:", search_name)
+        print("in", os.listdir("./"))
     while True:
-        time.sleep(30)
-        ppls = parse_log(path)
+        ppls = parse_log(xp_folder)
         current_epoch = len(ppls) - 1
-        if current_epoch >= 1:
+        if current_epoch >= 0:
             if ppls[current_epoch][0] < base_ppls[current_epoch][0] and ppls[current_epoch][1] < base_ppls[current_epoch][1]:
                 need_to_kill = True
                 break
         if current_epoch == 39:
             break
+        time.sleep(30)
     if need_to_kill:
         kill_process(process)
 
 
-def parse_log(path):
-    f = open(f'{path}/log.txt', 'r')
+def parse_log(xp_folder):
+    if not os.path.isfile(f'{xp_folder}/log.txt'):
+        return []
+
+    f = open(f'{xp_folder}/log.txt', 'r')
     lines = f.readlines()
     f.close()
     ppls = []
@@ -86,12 +93,12 @@ def kill_process(process):
 
 # ========== MAIN ==========
 base_xp_name = "RNN_ADAM"
-folder = create_random_search_folder(base_xp_name)
+random_search_experience_name = generate_random_search_experience_name(base_xp_name)
 base_config = parse_config(base_xp_name)
 base_ppls = parse_log(f"experiences/{base_xp_name}")
 xp_id = 0
 while True:
     xp_id += 1
-    new_config = generate_new_config(base_config, folder, xp_id)
+    new_config = generate_new_config(base_config, random_search_experience_name, xp_id)
     process = start_process_with_config(new_config)
-    monitor_process(process, folder, xp_id, base_ppls)
+    monitor_process(process, random_search_experience_name, xp_id, base_ppls)
