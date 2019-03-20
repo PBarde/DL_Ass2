@@ -96,7 +96,9 @@ def parse_log(xp_folder):
 
 
 def kill_process(process):
-    os.killpg(os.getpgid(process.pid), signal.SIGINT)
+    # os.killpg(os.getpgid(process.pid), signal.SIGINT)
+    print("Killing process", process.pid)
+    process.kill()
     # try:
     #     process.kill()
     # except OSError:
