@@ -9,9 +9,8 @@ import argparse
 
 def get_base_xp_name_from_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('base_xp_name', type=str,
-                        help="Name of the base experience folder (located in the 'experiences' folder) which we want to improve",
-                        action='store', dest='base_xp_name')
+    parser.add_argument('base_xp_name', type=str, action='store',
+                        help="Name of the base experience folder (located in the 'experiences' folder) which we want to improve")
     options, args = parser.parse_args()
     return args.base_xp_name
 
