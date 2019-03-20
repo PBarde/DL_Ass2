@@ -41,10 +41,11 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
 
 
 def start_process_with_config(config):
-    command_string = "python ptb-lm.py"
+    #command_string = "python ptb-lm.py"
+    command_string = "ptb-lm.py"
     for key, value in config.items():
         command_string += f" --{key}={value}"
-    process = subprocess.Popen(command_string, shell=True)
+    process = subprocess.Popen(command_string, shell=False)
     return process
 
 
