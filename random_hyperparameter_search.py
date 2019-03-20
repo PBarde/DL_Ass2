@@ -3,7 +3,17 @@ import os
 import subprocess
 import datetime
 import time
-import signal
+import sys
+import argparse
+
+
+def get_base_xp_name_from_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('base_xp_name', type=str,
+                        help="Name of the base experience folder (located in the 'experiences' folder) which we want to improve",
+                        action='store', dest='base_xp_name')
+    options, args = parser.parse_args()
+    return args.base_xp_name
 
 
 def generate_random_search_experience_name(base_xp_name):
@@ -49,7 +59,7 @@ def start_process_with_config(config):
         # args.append(f"--{key}={value}")
         args.append(f"--{key}")
         args.append(f"{value}")
-    process = subprocess.Popen(args)
+    process = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     return process
 
 
@@ -66,6 +76,7 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
         print("Failed to find folder that starts with:", search_name)
         print("in", os.listdir("./"))
     while True:
+        sys.stdout.flush()
         ppls = parse_log(xp_folder)
         current_epoch = len(ppls) - 1
         if current_epoch >= 0:
@@ -104,7 +115,7 @@ def kill_process(process):
 
 
 # ========== MAIN ==========
-base_xp_name = "RNN_ADAM"
+base_xp_name = get_base_xp_name_from_args()
 random_search_experience_name = generate_random_search_experience_name(base_xp_name)
 base_config = parse_config(base_xp_name)
 base_ppls = parse_log(f"experiences/{base_xp_name}")
