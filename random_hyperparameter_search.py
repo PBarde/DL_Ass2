@@ -44,7 +44,9 @@ def start_process_with_config(config):
     command_string = "./ptb-lm.py"
     args = [command_string]
     for key, value in config.items():
-        args.append(f"--{key}={value}")
+        # args.append(f"--{key}={value}")
+        args.append(f"--{key}")
+        args.append(f"{value}")
     process = subprocess.Popen(args)
     return process
 
