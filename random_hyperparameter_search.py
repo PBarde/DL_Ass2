@@ -34,6 +34,7 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
         elif key in ['model', 'optimizer']:
             new_random_config[key] = value
     new_random_config['save_dir'] = f"{random_search_experience_name}_{xp_id}_"
+    print("generated config:", new_random_config)
     return new_random_config
 
 
@@ -60,7 +61,9 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
         ppls = parse_log(xp_folder)
         current_epoch = len(ppls) - 1
         if current_epoch >= 0:
-            if ppls[current_epoch][0] < base_ppls[current_epoch][0] and ppls[current_epoch][1] < base_ppls[current_epoch][1]:
+            if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
+                print(f"Stopping training because current ppl values did not beat the ones of the base xp "
+                      f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]}")
                 need_to_kill = True
                 break
         if current_epoch == 39:
