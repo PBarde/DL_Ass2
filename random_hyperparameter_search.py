@@ -3,6 +3,7 @@ import os
 import subprocess
 import datetime
 import time
+import signal
 
 
 def generate_random_search_experience_name(base_xp_name):
@@ -29,6 +30,8 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
             new_random_value = float(value) + np.random.randn() * float(value) / 2
             if key in ['batch_size', 'emb_size', 'hidden_size', 'num_layers', 'seq_len']:
                 new_random_value = max(1, int(new_random_value))
+            if key in ['dk_keep_prob']:
+                new_random_value = max(0.05, min(0.95, float(new_random_value)))
             new_random_config[key] = new_random_value
         elif key in ['model', 'optimizer']:
             new_random_config[key] = value
@@ -41,11 +44,14 @@ def start_process_with_config(config):
     command_string = "python ptb-lm.py"
     for key, value in config.items():
         command_string += f" --{key}={value}"
-    return subprocess.Popen(command_string, shell=True)
+    process = subprocess.Popen(command_string, shell=False)#, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return process
 
 
 def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
     time.sleep(30)
+    kill_process(process)
+    return
     need_to_kill = False
     xp_folder = ""
     search_name = f"{random_search_experience_name}_{xp_id}_"
@@ -90,10 +96,12 @@ def parse_log(xp_folder):
 
 
 def kill_process(process):
-    try:
-        process.kill()
-    except OSError:
-        print("Failed to kill the process")
+    os.getpgid()
+    os.killpg(os.getpgid(process.pid), signal.SIGINT)
+    # try:
+    #     process.kill()
+    # except OSError:
+    #     print("Failed to kill the process")
 
 
 # ========== MAIN ==========
