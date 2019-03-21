@@ -7,10 +7,12 @@
 On a remote server make sure you did the following steps:
 
 1. Pull the project
-2. Create the `experiences` folder
-3. Copy the folder of the experience you want to improve into that `experiences` folder
+2. Run `chmod +x ptb-lm.py`
+3. Change the path on the first line of `ptb-lm.py` by the one that the command `which python` gives you (but keep the `#!`)
+4. Create the `experiences` folder
+5. Copy the folder of the experience you want to improve into that `experiences` folder
 
-And then run the following command:
+And then run the following command to launch the script:
 
 `nohup python -u random_hyperparameter_search.py BASE_XP_NAME &`
 
