@@ -447,7 +447,7 @@ class MultiHeadedAttention(nn.Module):
         A = F.softmax(softmax_val * mask - 10e9 * (1.0 - mask), dim=-1)
         Z = self.attention_dropout(A)
         Z = A @ value_proj
-        Z = Z.transpose(1, 2).view(batch_size, seq_len, self.n_units)
+        Z = Z.transpose(1, 2).contiguous().view(batch_size, seq_len, self.n_units)
         Z = self.Wo(Z)
         return Z  # size: (batch_size, seq_len, self.n_units)
 
