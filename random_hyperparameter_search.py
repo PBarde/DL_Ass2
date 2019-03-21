@@ -37,8 +37,10 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
     for key, value in base_config.items():
         if key in ['batch_size', 'dp_keep_prob', 'emb_size', 'hidden_size', 'initial_lr', 'num_layers', 'seq_len']:
             new_random_value = float(value) + np.random.randn() * float(value) / 2
-            if key in ['batch_size', 'emb_size', 'hidden_size', 'num_layers', 'seq_len']:
+            if key in ['num_layers']:
                 new_random_value = max(1, int(new_random_value))
+            if key in ['batch_size', 'emb_size', 'hidden_size', 'seq_len']:
+                new_random_value = max(10, int(new_random_value))
             if key in ['dp_keep_prob']:
                 new_random_value = max(0.1, min(0.9, float(new_random_value)))
             if key in ['initial_lr']:
