@@ -83,11 +83,15 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
             if current_epoch != last_epoch:
                 last_epoch = current_epoch
                 print(f"Epoch {current_epoch}, train ppl: {ppls[current_epoch][0]}, val ppl: {ppls[current_epoch][1]}")
-            if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
-                print(f"Stopping training because current ppl values did not beat the ones of the base xp "
-                      f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
-                need_to_kill = True
-                break
+                if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
+                    print(f"Stopping training because current ppl values did not beat the ones of the base xp "
+                          f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
+                    need_to_kill = True
+                    break
+                if current_epoch >= 2 and ppls[current_epoch][1] < ppls[current_epoch-2][1] and ppls[current_epoch-1][1] < ppls[current_epoch-2][1]:
+                    print(f"Stopping training because the network is overfitting")
+                    need_to_kill = True
+                    break
         if current_epoch == 39:
             break
         time.sleep(30)
