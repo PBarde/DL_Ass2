@@ -398,45 +398,6 @@ and a linear layer followed by a softmax.
 
 
 # ----------------------------------------------------------------------------------
-
-class AttentionHead(nn.Module):
-
-    def __init__(self, d_k, n_units, dropout):
-        super(AttentionHead, self).__init__()
-
-        self.d_k = d_k
-        self.n_units = n_units
-        self.Wq = nn.Linear(in_features=self.n_units, out_features=self.d_k)
-        self.Wk = nn.Linear(in_features=self.n_units, out_features=self.d_k)
-        self.Wv = nn.Linear(in_features=self.n_units, out_features=self.d_k)
-        self.attention_dropout = nn.Dropout(p=dropout)
-
-        # Initialization
-        k = math.sqrt(1/self.n_units)
-
-        nn.init.uniform_(self.Wq.weight, -k, k)
-        nn.init.uniform_(self.Wq.bias, -k, k)
-
-        nn.init.uniform_(self.Wk.weight, -k, k)
-        nn.init.uniform_(self.Wk.bias, -k, k)
-
-        nn.init.uniform_(self.Wv.weight, -k, k)
-        nn.init.uniform_(self.Wv.bias, -k, k)
-
-
-    def forward(self, query, key, value, mask):
-        mask = mask.float()
-        query_proj = self.Wq(query)
-        key_proj = self.Wk(key)
-        value_proj = self.Wv(value)
-
-        softmax_val = query_proj @ key_proj.permute(0, 2, 1) / math.sqrt(self.d_k)
-        A = F.softmax(softmax_val * mask - 10e9 * (1.0-mask), dim=2)
-        A_drop = self.attention_dropout(A)
-
-        return A_drop @ value_proj
-
-
 # TODO: implement this class
 class MultiHeadedAttention(nn.Module):
     def __init__(self, n_heads, n_units, dropout=0.1):
@@ -460,16 +421,11 @@ class MultiHeadedAttention(nn.Module):
         # Note: the only Pytorch modules you are allowed to use are nn.Linear
         # and nn.Dropout
 
-        first_head = AttentionHead(self.d_k, self.n_units, dropout)
-        additional_head = clones(AttentionHead(self.d_k, self.n_units, dropout), self.n_heads-1)
-        self.heads = nn.ModuleList([first_head]).extend(additional_head)
-
+        self.Wq = nn.Linear(in_features=self.n_units, out_features=self.n_units)
+        self.Wk = nn.Linear(in_features=self.n_units, out_features=self.n_units)
+        self.Wv = nn.Linear(in_features=self.n_units, out_features=self.n_units)
         self.Wo = nn.Linear(in_features=n_units, out_features=self.n_units)
-
-        # Initialization
-        k = math.sqrt(1/self.n_units)
-        nn.init.uniform_(self.Wo.weight, -k, k)
-        nn.init.uniform_(self.Wo.bias, -k, k)
+        self.attention_dropout = nn.Dropout(p=dropout)
 
 
     def forward(self, query, key, value, mask=None):
@@ -479,16 +435,20 @@ class MultiHeadedAttention(nn.Module):
         # As described in the .tex, apply input masking to the softmax
         # generating the "attention values" (i.e. A_i in the .tex)
         # Also apply dropout to the attention values.
-        Z_cat = []
+        batch_size = query.size(0)
+        seq_len = query.size(1)
 
-        for i, head in enumerate(self.heads):
-            H_i = head(query, key, value, mask)
-            if i == 0:
-                Z_cat = H_i.clone()
-            else:
-                Z_cat = torch.cat((Z_cat, H_i), dim=2)
+        mask = mask.float().unsqueeze(1)
+        query_proj = self.Wq(query).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
+        key_proj = self.Wk(key).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
+        value_proj = self.Wv(value).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
 
-        Z = self.Wo(Z_cat)
+        softmax_val = query_proj @ key_proj.transpose(-2, -1) / math.sqrt(self.d_k)
+        A = F.softmax(softmax_val * mask - 10e9 * (1.0 - mask), dim=-1)
+        Z = self.attention_dropout(A)
+        Z = A @ value_proj
+        Z = Z.transpose(1, 2).view(batch_size, seq_len, self.n_units)
+        Z = self.Wo(Z)
         return Z  # size: (batch_size, seq_len, self.n_units)
 
 
