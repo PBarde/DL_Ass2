@@ -100,6 +100,7 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
                         break
                 if need_to_kill:
                     print(f"Stopping training because the network is overfitting")
+                    break
         if current_epoch == 39:
             break
         time.sleep(30)
