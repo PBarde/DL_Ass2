@@ -81,10 +81,10 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
         sys.stdout.flush()
         ppls = parse_log(xp_folder)
         current_epoch = len(ppls) - 1
-        if current_epoch >= 2:
-            if current_epoch != last_epoch:
-                last_epoch = current_epoch
-                print(f"Epoch {current_epoch}, train ppl: {ppls[current_epoch][0]}, val ppl: {ppls[current_epoch][1]}")
+        if current_epoch != last_epoch:
+            last_epoch = current_epoch
+            print(f"Epoch {current_epoch}, train ppl: {ppls[current_epoch][0]}, val ppl: {ppls[current_epoch][1]}")
+            if current_epoch >= 2:
                 if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
                     print(f"Stopping training because current ppl values did not beat the ones of the base xp "
                           f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
