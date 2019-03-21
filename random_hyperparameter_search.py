@@ -90,10 +90,14 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
                           f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
                     need_to_kill = True
                     break
-                if current_epoch >= 2 and ppls[current_epoch][1] > ppls[current_epoch-2][1] and ppls[current_epoch-1][1] > ppls[current_epoch-2][1]:
+            if current_epoch >= 5:
+                need_to_kill = True
+                for t in range(5):
+                    if ppls[current_epoch-t][1] < ppls[current_epoch-5][1]:
+                        need_to_kill = False
+                        break
+                if need_to_kill:
                     print(f"Stopping training because the network is overfitting")
-                    need_to_kill = True
-                    break
         if current_epoch == 39:
             break
         time.sleep(30)
