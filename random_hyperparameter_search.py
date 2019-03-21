@@ -49,6 +49,7 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
         elif key in ['model', 'optimizer']:
             new_random_config[key] = value
     new_random_config['save_dir'] = f"{random_search_experience_name}_{xp_id}_"
+    new_random_config['save_best'] = ""
     print("generated config:", new_random_config)
     return new_random_config
 
@@ -59,7 +60,8 @@ def start_process_with_config(config):
     for key, value in config.items():
         # args.append(f"--{key}={value}")
         args.append(f"--{key}")
-        args.append(f"{value}")
+        if value != "":
+            args.append(f"{value}")
     process = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     return process
 
