@@ -447,16 +447,16 @@ class MultiHeadedAttention(nn.Module):
         batch_size = query.size(0)
         seq_len = query.size(1)
 
-        mask = mask.float().unsqueeze(1)
-        query_proj = self.Wq(query).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        key_proj = self.Wk(key).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
-        value_proj = self.Wv(value).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
+        mask = mask.unsqueeze(1)
+        query_proj = self.Wq(query).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
+        key_proj = self.Wk(key).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
+        value_proj = self.Wv(value).view(batch_size, -1, self.n_heads, self.d_k).transpose(1, 2)
 
         softmax_val = torch.matmul(query_proj, key_proj.transpose(-2, -1)) / math.sqrt(self.d_k)
         A = F.softmax(softmax_val.masked_fill(mask == 0, - 10e9), dim=-1)
         Z = self.attention_dropout(A)
         Z = torch.matmul(A, value_proj)
-        Z = Z.transpose(1, 2).contiguous().view(batch_size, seq_len, self.n_units)
+        Z = Z.transpose(1, 2).contiguous().view(batch_size, -1, self.n_units)
         Z = self.Wo(Z)
         return Z  # size: (batch_size, seq_len, self.n_units)
 
