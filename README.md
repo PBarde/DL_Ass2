@@ -7,10 +7,10 @@
 On a remote server make sure you did the following steps:
 
 1. Pull the project
-2. Run `chmod +x ptb-lm.py`
-3. Change the path on the first line of `ptb-lm.py` by the one that the command `which python` gives you (but keep the `#!`)
-4. Create the `experiences` folder
-5. Copy the folder of the experience you want to improve into that `experiences` folder
+2. Change the path on the first line of `ptb-lm.py` by the one that the command `which python` gives you (but keep the `#!`)
+3. Create the `experiences` folder
+4. Copy the folder of the experience you want to improve into that `experiences` folder
+    - If you want to use Google Cloud SDK and `scp` for that, you might need to relax the permissions of your remote experience folder with `chmod -R 777 experiences`
 
 And then run the following command to launch the script:
 
