@@ -425,6 +425,16 @@ class MultiHeadedAttention(nn.Module):
         self.Wk = nn.Linear(in_features=self.n_units, out_features=self.n_units)
         self.Wv = nn.Linear(in_features=self.n_units, out_features=self.n_units)
         self.Wo = nn.Linear(in_features=n_units, out_features=self.n_units)
+
+        k = math.sqrt(1/self.n_units)
+        torch.nn.init.uniform_(self.Wq.weight, -k, k)
+        torch.nn.init.uniform_(self.Wq.bias, -k, k)
+        torch.nn.init.uniform_(self.Wk.weight, -k, k)
+        torch.nn.init.uniform_(self.Wk.bias, -k, k)
+        torch.nn.init.uniform_(self.Wv.weight, -k, k)
+        torch.nn.init.uniform_(self.Wv.bias, -k, k)
+        torch.nn.init.uniform_(self.Wo.weight, -k, k)
+        torch.nn.init.uniform_(self.Wo.bias, -k, k)
         self.attention_dropout = nn.Dropout(p=dropout)
 
 
