@@ -18,4 +18,10 @@ And then run the following command to launch the script:
 
 - The `BASE_XP_NAME` argument must be replaced with the name of your experience that you wish to improve. You must write the folder name of your experience that is located in the `experiences` folder.
 - The `nohup` allows the script to continue running even when the ssh session is terminated. 
-- The `-u` option forces the output buffer to flush frequently, allowing the output to be written into the automatically created `nohup.out` file. 
+- The `-u` option forces the output buffer to flush frequently, allowing the output to be written into the automatically created `nohup.out` file.
+
+### Downloading the results 
+
+With Google Cloud SDK, run the following command:
+
+```gcloud compute scp --recurse remote_server:training_directory_path local_directory_path```
