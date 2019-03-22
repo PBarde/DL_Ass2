@@ -426,7 +426,7 @@ class MultiHeadedAttention(nn.Module):
         self.Wv = nn.Linear(in_features=self.n_units, out_features=self.n_units)
         self.Wo = nn.Linear(in_features=n_units, out_features=self.n_units)
 
-        k = math.sqrt(1/self.n_units)
+        k = math.sqrt(1 / self.n_units)
         torch.nn.init.uniform_(self.Wq.weight, -k, k)
         torch.nn.init.uniform_(self.Wq.bias, -k, k)
         torch.nn.init.uniform_(self.Wk.weight, -k, k)
@@ -436,7 +436,6 @@ class MultiHeadedAttention(nn.Module):
         torch.nn.init.uniform_(self.Wo.weight, -k, k)
         torch.nn.init.uniform_(self.Wo.bias, -k, k)
         self.attention_dropout = nn.Dropout(p=dropout)
-
 
     def forward(self, query, key, value, mask=None):
         # TODO: implement the masked multi-head attention.
@@ -449,14 +448,14 @@ class MultiHeadedAttention(nn.Module):
         seq_len = query.size(1)
 
         mask = mask.float().unsqueeze(1)
-        query_proj = self.Wq(query).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
-        key_proj = self.Wk(key).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
-        value_proj = self.Wv(value).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1,2)
+        query_proj = self.Wq(query).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
+        key_proj = self.Wk(key).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
+        value_proj = self.Wv(value).view(batch_size, seq_len, self.n_heads, self.d_k).transpose(1, 2)
 
-        softmax_val = query_proj @ key_proj.transpose(-2, -1) / math.sqrt(self.d_k)
-        A = F.softmax(softmax_val * mask - 10e9 * (1.0 - mask), dim=-1)
+        softmax_val = torch.matmul(query_proj, key_proj.transpose(-2, -1)) / math.sqrt(self.d_k)
+        A = F.softmax(softmax_val.masked_fill(mask == 0, - 10e9), dim=-1)
         Z = self.attention_dropout(A)
-        Z = A @ value_proj
+        Z = torch.matmul(A, value_proj)
         Z = Z.transpose(1, 2).contiguous().view(batch_size, seq_len, self.n_units)
         Z = self.Wo(Z)
         return Z  # size: (batch_size, seq_len, self.n_units)
