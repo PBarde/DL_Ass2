@@ -41,6 +41,15 @@ def generate_new_config(base_config, random_search_experience_name, xp_id):
                 new_random_value = max(1, int(new_random_value))
             if key in ['batch_size', 'emb_size', 'hidden_size', 'seq_len']:
                 new_random_value = max(10, int(new_random_value))
+            if base_config['model'] == "TRANSFORMER" and key == 'hidden_size':
+                nb_heads = 16
+                remaining = new_random_value % nb_heads
+                if remaining >= nb_heads / 2:
+                    new_random_value += nb_heads - remaining
+                else:
+                    new_random_value -= remaining
+                if new_random_value == 0:
+                    new_random_value = nb_heads
             if key in ['dp_keep_prob']:
                 new_random_value = max(0.1, min(0.9, float(new_random_value)))
             if key in ['initial_lr']:
