@@ -102,8 +102,8 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
                           f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
                     need_to_kill = True
                     break
-            # Overfitting check (after 6 epochs, we check if the model is overfitting, but only if not better than the base one)
-            if current_epoch >= 5 and ppls[-1][2] > base_ppls[-1][2]:
+            # Overfitting check (after 6 epochs, we check if the model is overfitting)
+            if current_epoch >= 5:  # and ppls[-1][2] > base_ppls[-1][2]:  # but only if not better than the base one
                 need_to_kill = True
                 for t in range(5):
                     if ppls[current_epoch-t][1] < ppls[current_epoch-5][1]:
