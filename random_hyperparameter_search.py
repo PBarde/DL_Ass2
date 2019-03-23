@@ -62,7 +62,7 @@ def start_process_with_config(config):
         args.append(f"--{key}")
         if value != "":
             args.append(f"{value}")
-    process = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    process = subprocess.Popen(args)
     return process
 
 
