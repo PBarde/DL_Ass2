@@ -86,13 +86,15 @@ def monitor_process(process, random_search_experience_name, xp_id, base_ppls):
         if current_epoch != last_epoch:
             last_epoch = current_epoch
             print(f"Epoch {current_epoch}, train ppl: {ppls[current_epoch][0]}, val ppl: {ppls[current_epoch][1]}")
+            # Performance check (after 3 epochs, we start checking if the experiment yields better results)
             if current_epoch >= 2:
                 if ppls[current_epoch][0] > base_ppls[current_epoch][0] and ppls[current_epoch][1] > base_ppls[current_epoch][1]:
                     print(f"Stopping training because current ppl values did not beat the ones of the base xp "
                           f"(train: {base_ppls[current_epoch][0]}, val: {base_ppls[current_epoch][1]})")
                     need_to_kill = True
                     break
-            if current_epoch >= 5:
+            # Overfitting check (after 6 epochs, we check if the model is overfitting, but only if not better than the base one)
+            if current_epoch >= 5 and ppls[-1][2] > base_ppls[-1][2]:
                 need_to_kill = True
                 for t in range(5):
                     if ppls[current_epoch-t][1] < ppls[current_epoch-5][1]:
@@ -121,7 +123,8 @@ def parse_log(xp_folder):
         epoch = int(values[0].split("epoch: ")[1])
         train_ppl = float(values[1].split("train ppl: ")[1])
         val_ppl = float(values[2].split("val ppl: ")[1])
-        ppls.append((train_ppl, val_ppl))
+        best_val = float(values[3].split("best val: ")[1])
+        ppls.append((train_ppl, val_ppl, best_val))
     return ppls
 
 
