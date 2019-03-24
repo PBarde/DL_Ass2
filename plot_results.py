@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-FIRST = True
-
 
 def parse_config():
     exp_config = {}
@@ -39,7 +37,7 @@ def parse_log():
     return best_ppl_pair, wall_clock_times
 
 
-def print_experience(EXP_NAME, exp_config, ppls, wall_clock_times):
+def print_experience(EXP_NAME, exp_config, ppls, print_header):
     headers = "EXP_NAME\t"
     config_str = ""
     for key, value in exp_config.items():
@@ -47,7 +45,7 @@ def print_experience(EXP_NAME, exp_config, ppls, wall_clock_times):
             continue
         headers += f"{key}\t"
         config_str += f"{value}\t"
-    if FIRST:
+    if print_header:
         print(f"{headers}train_ppl\tval_ppl")
     print(f'{EXP_NAME}\t{config_str}{ppls[0]}\t{ppls[1]}')
 
@@ -138,10 +136,85 @@ def plot_curves(curves, wall_clock_times):
     plt.close()
 
 
+def plot_comparison_curves(curves):
+    for key, val in curves.items():
+        # val ppls for each architectures/optimizers by epoch
+        fig, ax = plt.subplots()
+        for curve in val:
+            id = get_hardcoded_id_from_exp_name(curve[0])
+            ax.plot(curve[1], label=f"{id}. {curve[0]}")
+            ax.legend()
+        ax.set(xlabel='epoch', ylabel='ppl', title=f"Validation curves of {key}")
+        ax.grid()
+        plt.savefig(f'{key}_epoch.png')
+        # plt.show()
+        plt.close()
+
+        # val ppls for each architectures/optimizers by wall-clock-time
+        fig, ax = plt.subplots()
+        for curve in val:
+            id = get_hardcoded_id_from_exp_name(curve[0])
+            ax.plot(curve[2], curve[1], label=f"{id}. {curve[0]}")
+            ax.legend()
+        ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title=f"Validation curves of {key}")
+        ax.grid()
+        plt.savefig(f'{key}_wall-clock-time.png')
+        # plt.show()
+        plt.close()
+
+
+def get_hardcoded_id_from_exp_name(exp_name):
+    if exp_name == "GRU_ADAM":
+        return 1
+    if exp_name == "GRU_SGD":
+        return 2
+    if exp_name == "GRU_random_hyperparameters_best":
+        return 3
+    if exp_name == "GRU_random_hyperparameters_better_1":
+        return 4
+    if exp_name == "GRU_random_hyperparameters_better_2":
+        return 5
+    if exp_name == "GRU_SGD_LR_SCHEDULE":
+        return 6
+    if exp_name == "RNN_ADAM":
+        return 7
+    if exp_name == "RNN_random_hyperparameters_best":
+        return 8
+    if exp_name == "RNN_random_hyperparameters_better_2":
+        return 9
+    if exp_name == "RNN_random_hyperparameters_better_1":
+        return 10
+    if exp_name == "RNN_SGD":
+        return 11
+    if exp_name == "RNN_SGD_LR_SCHEDULE":
+        return 12
+    if exp_name == "TRANSFORMER_ADAM":
+        return 13
+    if exp_name == "TRANSFORMER_random_hyperparameters_best":
+        return 14
+    if exp_name == "TRANSFORMER_random_hyperparameters_better_1":
+        return 15
+    if exp_name == "TRANSFORMER_manual_best":
+        return 16
+    if exp_name == "TRANSFORMER_SGD":
+        return 17
+    if exp_name == "TRANSFORMER_SGD_LR_SCHEDULE":
+        return 18
+    assert False
+
+
+FIRST = True
+architectures = {"RNN": [], "GRU": [], "TRANSFORMER": []}
+optimizers = {"SGD": [], "SGD_LR_SCHEDULE": [], "ADAM": []}
 for EXP_NAME in os.listdir('experiences'):
     exp_config = parse_config()
     ppls, wall_clock_times = parse_log()
-    print_experience(EXP_NAME, exp_config, ppls, wall_clock_times)
+    print_experience(EXP_NAME, exp_config, ppls, FIRST)
     curves = parse_learning_curves(exp_config)
     plot_curves(curves, wall_clock_times)
+    architectures[exp_config["model"]].append((EXP_NAME, curves["val_ppls"], wall_clock_times))
+    optimizers[exp_config["optimizer"]].append((EXP_NAME, curves["val_ppls"], wall_clock_times))
     FIRST = False
+
+plot_comparison_curves(architectures)
+plot_comparison_curves(optimizers)
