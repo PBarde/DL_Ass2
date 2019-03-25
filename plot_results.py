@@ -96,6 +96,8 @@ def plot_curves(curves, wall_clock_times):
     ax.plot(curves["val_ppls"], label="val_ppls")
     ax.legend()
     ax.set(xlabel='epoch', ylabel='ppl', title=EXP_NAME)
+    if ax.get_ylim()[1] > 2000:
+        ax.set_ylim(0, 2000)
     ax.grid()
     plt.savefig(f'experiences/{EXP_NAME}/{EXP_NAME.lower()}_epoch.png')
     # plt.show()
@@ -108,6 +110,8 @@ def plot_curves(curves, wall_clock_times):
     ax.plot(wall_clock_times, curves["val_ppls"], label="val_ppls")
     ax.legend()
     ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title=EXP_NAME)
+    if ax.get_ylim()[1] > 2000:
+        ax.set_ylim(0, 2000)
     ax.grid()
     plt.savefig(f'experiences/{EXP_NAME}/{EXP_NAME.lower()}_wall_clock_time.png')
     # plt.show()
@@ -120,6 +124,8 @@ def plot_curves(curves, wall_clock_times):
     ax.plot(curves["val_losses"], label="val_losses")
     ax.legend()
     ax.set(xlabel='epoch', ylabel='loss', title=EXP_NAME)
+    if ax.get_ylim()[1] > 2000:
+        ax.set_ylim(0, 2000)
     ax.grid()
     # plt.show()
     plt.close()
@@ -131,6 +137,8 @@ def plot_curves(curves, wall_clock_times):
     ax.plot(wall_clock_times, curves["val_losses"], label="val_losses")
     ax.legend()
     ax.set(xlabel='wall-clock-time (h)', ylabel='loss', title=EXP_NAME)
+    if ax.get_ylim()[1] > 2000:
+        ax.set_ylim(0, 2000)
     ax.grid()
     # plt.show()
     plt.close()
@@ -145,6 +153,8 @@ def plot_comparison_curves(curves):
             ax.plot(curve[1], label=f"{id}. {curve[0]}")
             ax.legend()
         ax.set(xlabel='epoch', ylabel='ppl', title=f"Validation curves of {key}")
+        if ax.get_ylim()[1] > 2000:
+            ax.set_ylim(0, 2000)
         ax.grid()
         plt.savefig(f'{key}_epoch.png')
         # plt.show()
@@ -157,6 +167,8 @@ def plot_comparison_curves(curves):
             ax.plot(curve[2], curve[1], label=f"{id}. {curve[0]}")
             ax.legend()
         ax.set(xlabel='wall-clock-time (h)', ylabel='ppl', title=f"Validation curves of {key}")
+        if ax.get_ylim()[1] > 2000:
+            ax.set_ylim(0, 2000)
         ax.grid()
         plt.savefig(f'{key}_wall-clock-time.png')
         # plt.show()
